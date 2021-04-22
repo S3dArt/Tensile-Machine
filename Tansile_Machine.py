@@ -39,7 +39,8 @@ class Ui_MainWindow(object):
         self.graphWidget.setGeometry(QtCore.QRect(20, 20, 761, 241))
         self.graphWidget.setObjectName("graphWidget")
         
-        self.dataSerial = 0
+        self.dataSerial1 = 0
+        self.dataSerial2 = 0
         #Graph style
         self.x = []  # 100 time points
         self.y = []  # 100 data points
@@ -55,16 +56,11 @@ class Ui_MainWindow(object):
 
 
         #update graph
+        # self.data_line = self.plot(self.x, self.y, self.pen)
         # self.timer = QtCore.QTimer()
         # self.timer.setInterval(50)
         # self.timer.timeout.connect(self.update_plot_data)
         # self.timer.start()
-        
-        self.data_line = self.plot(self.x, self.y, self.pen)
-        self.timer = QtCore.QTimer()
-        self.timer.setInterval(50)
-        self.timer.timeout.connect(self.update_plot_data)
-        self.timer.start()
         
     
         self.connectBox = QtWidgets.QGroupBox(self.centralwidget)
@@ -259,8 +255,13 @@ class Ui_MainWindow(object):
 
 
     def startGraphButton(self):
-        if self.startGraph.text() == "Начать измерения":
+        if self.startGraph.text() == "Начать измерения" and self.connectComButton.text() == "Отключиться":
                 try:
+                    self.data_line = self.plot(self.x, self.y, self.pen)
+                    self.timer = QtCore.QTimer()
+                    self.timer.setInterval(50)
+                    self.timer.timeout.connect(self.update_plot_data)
+                    self.timer.start()
                     font = QtGui.QFont()
                     font.setFamily("Arial")
                     font.setPointSize(12)
@@ -273,9 +274,7 @@ class Ui_MainWindow(object):
                     
 
         else:
-                #self.timer.stop()
-                #self.x = []
-                #self.y = []
+                self.timer.stop()
                 font = QtGui.QFont()
                 font.setFamily("Arial")
                 font.setPointSize(14)
@@ -289,19 +288,23 @@ class Ui_MainWindow(object):
         return self.graphWidget.plot(dateX, dateY, pen=pen)
 
     def update_plot_data(self):
-        if len(self.x) >= 120:
+        if len(self.x) >= 4328000:
             self.x = self.x[1:] # Remove the first y element.
-            self.x.append(self.x[-1] + 1) # Add a new value 1 higher than the last.
+            self.x.append(self.x[-1] + 10) # Add a new value 1 higher than the last.
         else:
-            self.x.append(5)
-        #print(self.x)
+            if len(self.x) != 0:
+                self.x.append(self.x[-1] + 10)
+            else:
+                self.x.append(self.dataSerial1)
         
-        if len(self.y) >= 120:
+        if len(self.y) >= 4328000:
             self.y = self.y[1:] # Remove the first element
-            self.y.append(self.dataSerial) # Add a new random value.
+            self.y.append(self.dataSerial2) # Add a new random value.
         else:
-            self.y.append(self.dataSerial)
-        #print(self.y)
+            if len(self.y) == 0:
+                self.y.append(self.dataSerial2)
+            else:
+                self.y.append(self.dataSerial2)
         self.data_line.setData(self.x, self.y) #Update the datac
 
 
@@ -332,7 +335,7 @@ class Ui_MainWindow(object):
                 except:
                     print("Подключение к ком порту провалилось")
                     self.disconnectFromPort()
-        
+               
         elif self.connectComButton.text() == "Отключиться":
             try:
                 self.disconnectFromPort()
@@ -346,13 +349,14 @@ class Ui_MainWindow(object):
     def receive(self):
         while self.serial.canReadLine():
             text = self.serial.readLine().data().decode()
-            text = text.rstrip('\r\n')
+            text = text.rstrip('\r\n').split('%')
             print(text)
-            self.valueDistanceLcd.display(text)
-            self.dataSerial = float(text)
-            print(self.dataSerial)
+            self.valueDistanceLcd.display(text[0])
+            self.valueTensoLcd.display(text[1])
+            self.dataSerial2 = float(text[0])
+            self.dataSerial1 = float(text[1])
+            print(self.dataSerial1, self.dataSerial2)
             
-
 
     #@QtCore.pyqtSlot(bool)
     def disconnectFromPort(self):
