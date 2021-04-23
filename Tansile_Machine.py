@@ -13,10 +13,19 @@ from pyqtgraph import PlotWidget, plot
 import pyqtgraph as pg
 import sys
 import os
-from random import randint
+import time
 
-# import serial
-# from serial.tools import list_ports
+# Когда вы запускаете приложение, Windows смотрит на исполняемый файл и пытается угадать, к какой application group оно принадлежит.
+# По умолчанию все скрипты Python сгруппированы в одну и ту же группу "Python" , поэтому будет отображаться значок Python.
+# Чтобы это не происходило, нам нужно предоставить Windows другой идентификатор приложения.
+# Код ниже делает это, вызывая QtWin.setCurrentProcessExplicitAppUserModelID() с пользовательским идентификатором приложения.
+try:
+    # Включите в блок try/except, если вы также нацелены на Mac/Linux
+    from PyQt5.QtWinExtras import QtWin                                         #  !!!
+    myappid = 'mycompany.myproduct.subproduct.version'                          #  !!!
+    QtWin.setCurrentProcessExplicitAppUserModelID(myappid)                      #  !!!    
+except ImportError:
+    pass
 
 
 class Ui_MainWindow(object):
@@ -31,6 +40,7 @@ class Ui_MainWindow(object):
 "    background-color: #fb5d5d;\n"
 "}\n"
 "")
+        
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setStyleSheet("background-color: #22222e;\n"
 "")
@@ -271,7 +281,7 @@ class Ui_MainWindow(object):
                     self.startGraph.setText("Остановить измерения")
                 except:
                     print("Ошибка при нажатии на Начать измерение")
-        elif self.portComboBox.currentText() != '':
+        elif self.portComboBox.currentText() != '' and self.connectComButton.text() != "Подключиться":
             try:
                 self.timer.stop()
                 font = QtGui.QFont()
@@ -291,21 +301,22 @@ class Ui_MainWindow(object):
     def update_plot_data(self):
         if len(self.x) >= 4328000:
             self.x = self.x[1:] # Remove the first y element.
-            self.x.append(self.x[-1] + 10) # Add a new value 1 higher than the last.
+            # self.x.append(self.x[-1] + 10) # Add a new value 1 higher than the last.
+            self.x.append(self.dataSerial2)
         else:
             if len(self.x) != 0:
-                self.x.append(self.x[-1] + 10)
+                self.x.append(self.dataSerial2)
             else:
-                self.x.append(self.dataSerial1)
+                self.x.append(self.dataSerial2)
         
         if len(self.y) >= 4328000:
             self.y = self.y[1:] # Remove the first element
-            self.y.append(self.dataSerial2) # Add a new random value.
+            self.y.append(self.dataSerial1) # Add a new random value.
         else:
             if len(self.y) == 0:
-                self.y.append(self.dataSerial2)
+                self.y.append(self.dataSerial1)
             else:
-                self.y.append(self.dataSerial2)
+                self.y.append(self.dataSerial1)
         self.data_line.setData(self.x, self.y) #Update the datac
 
 
@@ -365,10 +376,10 @@ class Ui_MainWindow(object):
             text = self.serial.readLine().data().decode()
             text = text.rstrip('\r\n').split('%')
             print(text)
-            self.valueDistanceLcd.display(text[0])
-            self.valueTensoLcd.display(text[1])
             self.dataSerial2 = float(text[0])
-            self.dataSerial1 = float(text[1])
+            self.dataSerial1 = round(float(text[1]))
+            self.valueDistanceLcd.display(self.dataSerial2)
+            self.valueTensoLcd.display(self.dataSerial1)
             print(self.dataSerial1, self.dataSerial2)
             
 
@@ -397,9 +408,20 @@ class Ui_MainWindow(object):
 
 if __name__ == "__main__":
     import sys
+    #Задаём иконку в приложении
     app = QtWidgets.QApplication(sys.argv)
+    splash = QtGui.QSplashScreen(QtGui.QPixmap('icons\press2Icon.png'))
+    splash.show()
+    app.setWindowIcon(QtGui.QIcon('icons\press2Icon.png'))
+    #Задаём иконку на нижней панели(смотри привязку к )
     MainWindow = QtWidgets.QMainWindow()
+    MainWindow.setWindowIcon(QtGui.QIcon('icons\press2Icon.png'))
+    for n in ("HW presence", "net connective", "API connective"):
+        #splash.showMessage("Check for {0}".format(n))
+        time.sleep(0.1)
+        app.processEvents()
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)
+    splash.finish(MainWindow)
     MainWindow.show()
     sys.exit(app.exec_())
