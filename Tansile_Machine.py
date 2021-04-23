@@ -255,7 +255,7 @@ class Ui_MainWindow(object):
 
 
     def startGraphButton(self):
-        if self.startGraph.text() == "Начать измерения" and self.connectComButton.text() == "Отключиться":
+        if (self.startGraph.text() == "Начать измерения" or self.startGraph.text() == "Продолжить измерения") and self.connectComButton.text() == "Отключиться" :
                 try:
                     self.data_line = self.plot(self.x, self.y, self.pen)
                     self.timer = QtCore.QTimer()
@@ -270,18 +270,19 @@ class Ui_MainWindow(object):
                     self.startGraph.setFont(font)
                     self.startGraph.setText("Остановить измерения")
                 except:
-                    print("Ошибка при нажатии на начать измерение")
-                    
-
-        else:
+                    print("Ошибка при нажатии на Начать измерение")
+        elif self.portComboBox.currentText() != '':
+            try:
                 self.timer.stop()
                 font = QtGui.QFont()
                 font.setFamily("Arial")
-                font.setPointSize(14)
+                font.setPointSize(11)
                 font.setBold(True)
                 font.setWeight(75)
                 self.startGraph.setFont(font)
-                self.startGraph.setText("Начать измерения")
+                self.startGraph.setText("Продолжить измерения")
+            except:
+                print("Start graph fail")
     
 
     def plot(self, dateX, dateY, pen):
@@ -309,8 +310,20 @@ class Ui_MainWindow(object):
 
 
     def clearGraphButton(self):
-        self.graphWidget.clear()
-
+        try:
+            if (self.startGraph.text() == "Остановить измерения" or self.startGraph.text() == "Продолжить измерения"):
+                self.x = []
+                self.y = []
+                self.graphWidget.clear()
+                font = QtGui.QFont()
+                font.setFamily("Arial")
+                font.setPointSize(14)
+                font.setBold(True)
+                font.setWeight(75)
+                self.startGraph.setFont(font)
+                self.startGraph.setText("Начать измерения")
+        except:
+            print("Ошибка в очистке")
 
     #Функция для обновления ком портов
     def updateComPort(self):
@@ -340,6 +353,7 @@ class Ui_MainWindow(object):
             try:
                 self.disconnectFromPort()
                 self.connectComButton.setText("Подключиться")
+                self.clearGraphButton()
 
             except:
                 print("Не отключились от ком-порта")
