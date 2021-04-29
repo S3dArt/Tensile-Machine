@@ -13,6 +13,7 @@ from pyqtgraph import PlotWidget, plot
 import pyqtgraph as pg
 import sys
 import os
+from os import path
 import time
 
 # Когда вы запускаете приложение, Windows смотрит на исполняемый файл и пытается угадать, к какой application group оно принадлежит.
@@ -22,15 +23,25 @@ import time
 try:
     # Включите в блок try/except, если вы также нацелены на Mac/Linux
     from PyQt5.QtWinExtras import QtWin                                         #  !!!
-    myappid = 'mycompany.myproduct.subproduct.version'                          #  !!!
+    myappid = 'tensile_machine'                          #  mycompany.myproduct.subproduct.version
     QtWin.setCurrentProcessExplicitAppUserModelID(myappid)                      #  !!!    
 except ImportError:
     pass
 
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = path.abspath(".")
+
+    return path.join(base_path, relative_path)
+
 
 class Ui_MainWindow(object):
 
-
+    
     def setupUi(self, QMainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.setFixedSize(800, 600)
@@ -40,7 +51,7 @@ class Ui_MainWindow(object):
 "    background-color: #fb5d5d;\n"
 "}\n"
 "")
-        
+    
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setStyleSheet("background-color: #22222e;\n"
 "")
@@ -55,11 +66,11 @@ class Ui_MainWindow(object):
         self.x = []  # 100 time points
         self.y = []  # 100 data points
         self.graphWidget.setBackground('w')
-        self.graphWidget.setLabel('left', "<span style=\"color:red;font-size:20px\">Сила (Н)</span>")
-        self.graphWidget.setLabel('bottom', "<span style=\"color:red;font-size:20px\">Расстяжение (мм)</span>")
+        self.graphWidget.setLabel('left', "<span style=\"color:red;font-size:20px\">Сила, Н</span>")
+        self.graphWidget.setLabel('bottom', "<span style=\"color:red;font-size:20px\">Деформация, мм</span>")
         self.pen = pg.mkPen(color=(255, 0, 0), width=3)
         self.graphWidget.showGrid(x=True, y=True)
-
+        #self.graphWidget.setXRange(0, 155, padding=0) #Установка пределов оси X
 
         # plot data: x, y values
         #self.data_line = self.plot(self.x, self.y, pen)
@@ -410,12 +421,12 @@ if __name__ == "__main__":
     import sys
     #Задаём иконку в приложении
     app = QtWidgets.QApplication(sys.argv)
-    splash = QtGui.QSplashScreen(QtGui.QPixmap('icons\press2Icon.png'))
+    splash = QtGui.QSplashScreen(QtGui.QPixmap(resource_path('icons\press2IconReverse.ico')))
     splash.show()
-    app.setWindowIcon(QtGui.QIcon('icons\press2Icon.png'))
+    app.setWindowIcon(QtGui.QIcon(resource_path('icons\press2IconReverse.ico')))
     #Задаём иконку на нижней панели(смотри привязку к )
     MainWindow = QtWidgets.QMainWindow()
-    MainWindow.setWindowIcon(QtGui.QIcon('icons\press2Icon.png'))
+    MainWindow.setWindowIcon(QtGui.QIcon(resource_path('icons\press2IconReverse.png')))
     for n in ("HW presence", "net connective", "API connective"):
         #splash.showMessage("Check for {0}".format(n))
         time.sleep(0.1)
