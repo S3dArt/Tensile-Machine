@@ -10,11 +10,15 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets, QtSerialPort
 from pyqtgraph import PlotWidget, plot
+from PyQt5.QtWidgets import QApplication, QWidget, QInputDialog, QLineEdit, QFileDialog
+from PyQt5.QtGui import QIcon
+
 import pyqtgraph as pg
 import sys
 import os
 from os import path
 import time
+
 
 # Когда вы запускаете приложение, Windows смотрит на исполняемый файл и пытается угадать, к какой application group оно принадлежит.
 # По умолчанию все скрипты Python сгруппированы в одну и ту же группу "Python" , поэтому будет отображаться значок Python.
@@ -66,7 +70,7 @@ class Ui_MainWindow(object):
         self.x = []  # 100 time points
         self.y = []  # 100 data points
         self.graphWidget.setBackground('w')
-        self.graphWidget.setLabel('left', "<span style=\"color:red;font-size:20px\">Сила, Н</span>")
+        self.graphWidget.setLabel('left', "<span style=\"color:red;font-size:20px\">Нагрузка, Н</span>")
         self.graphWidget.setLabel('bottom', "<span style=\"color:red;font-size:20px\">Деформация, мм</span>")
         self.pen = pg.mkPen(color=(255, 0, 0), width=3)
         self.graphWidget.showGrid(x=True, y=True)
@@ -216,7 +220,7 @@ class Ui_MainWindow(object):
         self.valueDistanceLcd.setGeometry(QtCore.QRect(20, 40, 221, 101))
         self.valueDistanceLcd.setObjectName("valueDistanceLcd")
         self.startGraph = QtWidgets.QPushButton(self.centralwidget)
-        self.startGraph.setGeometry(QtCore.QRect(420, 280, 191, 41))
+        self.startGraph.setGeometry(QtCore.QRect(430, 280, 191, 41))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(14)
@@ -251,6 +255,47 @@ class Ui_MainWindow(object):
 "    background-color: #fa4244\n"
 "}")
         self.clearGraph.setObjectName("clearGraph")
+
+         #Кнопка сохранения
+        self.saveData = QtWidgets.QPushButton(self.centralwidget)
+        self.saveData.setGeometry(QtCore.QRect(230, 280, 191, 41))
+        font = QtGui.QFont()
+        font.setFamily("Arial")
+        font.setPointSize(14)
+        font.setBold(True)
+        font.setWeight(75)
+        self.saveData.setFont(font)
+        self.saveData.setStyleSheet("QPushButton{\n"
+"    color: white;\n"
+"    background-color: #fb5d5d;\n"
+"    border-radius: 30;\n"
+"}\n"
+"\n"
+"QPushButton:pressed{\n"
+"    background-color: #fa4244\n"
+"}")
+        self.saveData.setObjectName("saveData")
+
+        #Сброс
+        self.dischargeButton = QtWidgets.QPushButton(self.centralwidget)
+        self.dischargeButton.setGeometry(QtCore.QRect(680, 350, 90, 26))
+        font = QtGui.QFont()
+        font.setFamily("Arial")
+        font.setPointSize(12)
+        font.setBold(True)
+        font.setWeight(75)
+        self.dischargeButton.setFont(font)
+        self.dischargeButton.setStyleSheet("QPushButton{\n"
+"    color: white;\n"
+"    background-color: #fb5d5d;\n"
+"    border-radius: 30;\n"
+"}\n"
+"\n"
+"QPushButton:pressed{\n"
+"    background-color: #fa4244\n"
+"}")
+        self.dischargeButton.setObjectName("dischargeButton")
+
         MainWindow.setCentralWidget(self.centralwidget)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
@@ -271,7 +316,12 @@ class Ui_MainWindow(object):
         #Подлючиться к ком порту
         self.connectComButton.clicked.connect(self.connectComPort)
 
-        
+        #Сохранить данные
+        self.saveData.clicked.connect(self.data_save)
+
+        #Сбросить(установка нуля)
+        self.dischargeButton.clicked.connect(self.send)
+
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
 
@@ -393,10 +443,35 @@ class Ui_MainWindow(object):
             self.valueTensoLcd.display(self.dataSerial1)
             print(self.dataSerial1, self.dataSerial2)
             
+    def send(self):
+        try:
+            self.serial.write('t')
+        except:
+            print("No connect")
 
     #@QtCore.pyqtSlot(bool)
     def disconnectFromPort(self):
         self.serial.close()
+
+
+    #Save
+    def data_save(self):
+        try:
+            option = QFileDialog.Options()
+            file=QFileDialog.getSaveFileName(QWidget(), "Сохранить измерения", "Эксперимент.txt", "All Files (*),", options=option)
+            th = ["Номер измерения", "Тензодатчик, Н", "Перемещение, мм"]
+            if file:
+                print(file[0])
+                file = open(file[0], "w")
+                text = th[0] + "\t"  + th[1] + "\t" + th[2] + "\n"
+                for number in range(len(self.x)):
+                    text += str(number + 1) + "\t" + "\t" + str(self.y[number]) + "\t" + "\t" + str(self.x[number]) + "\n"
+                #text = " ".join(str(elem) for elem in self.x) + "\n" + " ".join(str(elem) for elem in self.y)
+                print(text)
+                file.write(text)
+                file.close()
+        except:
+            print("No save ")
 
 
     def retranslateUi(self, MainWindow):
@@ -413,6 +488,8 @@ class Ui_MainWindow(object):
         self.distanceBox.setTitle(_translate("MainWindow", "Расстояние, мм"))
         self.startGraph.setText(_translate("MainWindow", "Начать измерения"))
         self.clearGraph.setText(_translate("MainWindow", "Очистить"))
+        self.saveData.setText(_translate("MainWindow", "Сохранить"))
+        self.dischargeButton.setText(_translate("MainWindow", "Сбросить"))
 
 
         
